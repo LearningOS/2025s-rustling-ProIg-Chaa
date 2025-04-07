@@ -2,7 +2,7 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
+
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -70,14 +70,55 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+    where
+        T: Ord
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		let start = Self::merge_recursive(list_a.start, list_b.start);
+        let mut length = 0;
+        let mut end = None;
+        let mut current = start;
+
+        while let Some(node) = current {
+            length += 1;
+            end = Some(node);
+            current = unsafe { (*node.as_ptr()).next };
         }
+
+        Self {
+            length,
+            start,
+            end,
+        }
+
+
+
+		// Self {
+        //     length: 0,
+        //     start: None,
+        //     end: None,
+        // }
 	}
+    fn merge_recursive(
+        mut a: Option<NonNull<Node<T>>>,
+        mut b: Option<NonNull<Node<T>>>,
+    ) -> Option<NonNull<Node<T>>> 
+    where T:PartialOrd + Ord{
+        match (a, b) {
+            (None, None) => None,
+            (Some(node), None) | (None, Some(node)) => Some(node),
+            (Some(mut node_a), Some(mut node_b)) => {
+                if unsafe { (*node_a.as_ptr()).val <= (*node_b.as_ptr()).val } {
+                    let next = unsafe { (*node_a.as_ptr()).next };
+                    unsafe { (*node_a.as_ptr()).next = Self::merge_recursive(next, Some(node_b)) };
+                    Some(node_a)
+                } else {
+                    let next = unsafe { (*node_b.as_ptr()).next };
+                    unsafe { (*node_b.as_ptr()).next = Self::merge_recursive(Some(node_a), next) };
+                    Some(node_b)
+                }
+            }
+        }
+    }
 }
 
 impl<T> Display for LinkedList<T>
